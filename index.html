@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <title>Cartão Virtual</title>
+  <script src="https://widgets.marqeta.com/marqetajs/1.1.0/marqeta.min.js" type="text/javascript"></script>
+</head>
+
+<body scroll="no" style="overflow: hidden">
+  <!-- <div id="copy-pan-container"></div> -->
+  <div class="card">
+    <div class="flip" id="flip">
+      <div class="front" id="front-card">
+        <!-- <div class="investor">Cartão Virtual</div><div class="investor">black</div> -->
+      </div>
+      <div class="back">
+        <div class="card-container-top">
+          <input class="end-text" id="name-container" readonly></input>
+          <div class="card-icon" id="copy-name-container"></div>
+        </div>
+        <div class="card-container">
+          <div class="card-number" id="pan-container"></div>
+          <div class="card-icon" id="copy-pan-container"></div>
+        </div>
+        <div class="card-container-bottom">
+          <div class="card-container-item">
+            <p class="card-title">Validade
+            <p>
+            <div class="card-container">
+              <div class="card-text exp" id="exp-container"></div>
+              <div class="card-icon" id="copy-exp-container"></div>
+            </div>
+          </div>
+          <div class="card-container-item">
+            <p class="card-title">CVC
+            <p>
+            <div class="card-container">
+              <div class="card-text cvv" id="cvv-container"></div>
+              <div class="card-icon" id="copy-cvv-container"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+</body>
+
+</html>
+<script>
+  function setupCard(url) {
+    var headers = new Headers();
+    headers.append("custom-authorization", "YnRnLWN1c3RvbS1oZWFkZXItdmFsdWU=")
+    var init = {
+      method: 'GET',
+      headers: headers,
+      mode: 'cors',
+      cache: 'default'
+    };
+    fetch(url, init).then(function (response) {
+      return response.blob()
+    }).then(function (blob) {
+      var objectURL = URL.createObjectURL(blob);
+      const frontCard = document.getElementById("front-card")
+      frontCard.style.backgroundImage = "url(" + objectURL + ")"
+    });
+  }
+
+  function close() {
+    closeFlipAnimation()
+  }
+
+  function bootstrap(token, name) {
+    addName(name);
+    const span = (size = screen.width * 0.046) => {
+      return {
+        color: "white",
+        "font-family": '"montserrat", "Helvetica Neue", "Helvetica"',
+        "letter-spacing": "2px",
+        "font-weight": "400",
+        "font-size": `${size}px`
+      }
+    }
+    marqeta.bootstrap({
+      clientAccessToken: token,
+      showPan: {
+        cardPan: {
+          domId: "pan-container",
+          format: true,
+          styles: {
+            span: span(screen.width * 0.048),
+          },
+        },
+        copyCardPan: {
+          domId: "copy-pan-container",
+          mode: "transparent",
+          onCopySuccess: () => {
+            copyAnimation(document.getElementById("copy-pan-container"));
+          },
+          onCopyFailure: (error) => {
+            console.error(error);
+          },
+        },
+        cardExp: {
+          domId: "exp-container",
+          format: true,
+          styles: {
+            span: span(),
+          },
+        },
+        copyCardExp: {
+          domId: "copy-exp-container",
+          mode: "transparent",
+          onCopySuccess: () => {
+            copyAnimation(document.getElementById("copy-exp-container"));
+          },
+          onCopyFailure: (error) => {
+            console.error(error);
+          },
+        },
+        cardCvv: {
+          domId: "cvv-container",
+          styles: {
+            span: span(),
+          },
+        },
+        copyCardCvv: {
+          domId: "copy-cvv-container",
+          mode: "transparent",
+          onCopySuccess: () => {
+            copyAnimation(document.getElementById("copy-cvv-container"));
+          },
+          onCopyFailure: (error) => {
+            console.error(error);
+          },
+        },
+      },
+      callbackEvents: {
+        onSuccess: () => { },
+        onFailure: (error) => {
+          console.error(error);
+        },
+      },
+    });
+    flipAnimation();
+  }
+  // STYLE
+  document.getElementById("copy-name-container").addEventListener("click", function () {
+    copyToClipboard(document.getElementById("name-container"));
+    copyAnimation(this);
+  });
+
+  function copyAnimation(elem) {
+    elem.className = "card-icon";
+    elem.className = "card-icon copyTappedAnimation";
+    elem.style.animation = 'none';
+    elem.offsetHeight;
+    elem.style.animation = null;
+  }
+
+  function flipAnimation() {
+    const elem = document.getElementById("flip");
+    elem.className = "flip";
+    elem.className = "flip flipAnimation";
+    elem.style.animation = 'none';
+    elem.offsetHeight;
+    elem.style.animation = null;
+  }
+
+  function closeFlipAnimation() {
+    const elem = document.getElementById("flip");
+    elem.className = "flip closeFlipAnimation";
+  }
+
+  function addName(name) {
+    document.getElementById("name-container").value = name
+  }
+
+  function copyToClipboard(el) {
+    // resolve the element
+    el = (typeof el === 'string') ? document.querySelector(el) : el;
+    // handle iOS as a special case
+    if (navigator.userAgent.match(/ipad|ipod|iphone/i)) {
+      // save current contentEditable/readOnly status
+      var editable = el.contentEditable;
+      var readOnly = el.readOnly;
+      // convert to editable with readonly to stop iOS keyboard opening
+      el.contentEditable = true;
+      el.readOnly = true;
+      // create a selectable range
+      var range = document.createRange();
+      range.selectNodeContents(el);
+      // select the range
+      var selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      el.setSelectionRange(0, 999999);
+      // restore contentEditable/readOnly to original state
+      el.contentEditable = editable;
+      el.readOnly = readOnly;
+    } else {
+      el.select();
+    }
+    // execute copy command
+    document.execCommand('copy');
+  }
+
+  // setupCard("http://localhost:8080/main_card_background.png")
+  // bootstrap("eyJ0b2tlbiI6ICI0OGM4ZWI4Ni1kM2ZkLTQ2ZTUtYjNkZC1mOTk1MGNhOTAyNjQmYXBwbGljYXRpb25fdG9rZW49c3luY19zYW5kYm94X2FwaV9jb25zdW1lciIsICJhcHBsaWNhdGlvbiI6IHsidG9rZW4iOiJzeW5jX3NhbmRib3hfYXBpX2NvbnN1bWVyIiwiYWN0aXZlIjp0cnVlLCJjbGllbnRfYXBpX2Jhc2VfdXJsIjoiaHR0cHM6Ly93aWRnZXRzLXNhbmRib3gubWFycWV0YS5jb20vY2xpZW50L2FwaS92MSIsImFzc2V0c191cmwiOiJodHRwczovL3dpZGdldHMtc2FuZGJveC5tYXJxZXRhLmNvbS9jbGllbnQvYXNzZXRzLzEuMC4wIiwiY2xpZW50dG9rZW5hcHBsaWNhdGlvbl9pZCI6IjY0MzA3NTU2ZmFjZjczMDAwMWRhMmQyMCJ9LCAiYXBwbGljYXRpb25fdG9rZW4iOiBudWxsLCAiZXhwaXJlcyI6ICIyMDIzLTA0LTE3VDE1OjU1OjA3KzAwMDAiLCAiY2FyZF90b2tlbiI6ICJhZjczYmVkOC1hYzk3LTQ3YWMtOGFlMi1hY2QyODY4ZTE0N2IiLCAiYWNjZXNzZWQiOiBudWxsLCAiY2xpZW50dG9rZW5faWQiOiAiNjQzZDZhYWZmYWNmNzMwMDAxZGE4NzY3IiwgImNyZWF0ZWQiOiAiMjAyMy0wNC0xN1QxNTo1MDowNyswMDAwIn0=", "Name da Silva Oliveira")
+
+</script>
+<style>
+  iframe {
+    position: relative !important;
+  }
+
+  #pan-container {
+    height: 7vw;
+  }
+
+  *,
+  *:before,
+  *:after {
+    box-sizing: border-box;
+  }
+
+  body {
+    width: 100vw;
+    height: 100vh;
+    font-family: "Montserrat", "Helvetica", sans-serif;
+    font-size: 14px;
+    line-height: 1.3;
+    background-color: transparent;
+    margin: 0;
+  }
+
+  .inspiration {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    padding: 10px;
+    text-align: center;
+    text-decoration: none;
+    font-family: "Gill Sans", sans-serif;
+    font-size: 12px;
+    color: #fff;
+  }
+
+  .card {
+    width: 100%;
+    height: 100%;
+  }
+
+  .flip {
+    width: inherit;
+    height: inherit;
+  }
+
+  .flipAnimation {
+    transition: 1.2s;
+    transform-style: preserve-3d;
+    transform: rotateY(-180deg);
+  }
+
+  .closeFlipAnimation {
+    transition: 1.2s;
+    transform-style: preserve-3d;
+    transform: rotateX(0deg);
+  }
+
+  .front,
+  .back {
+    position: absolute;
+    width: inherit;
+    height: inherit;
+    border-radius: 16px;
+    color: #fff;
+    backface-visibility: hidden;
+    overflow: hidden;
+  }
+
+  .front {
+    transform: translateZ(0);
+    background-size: contain;
+    background-repeat: no-repeat;
+  }
+
+  .logo {
+    position: absolute;
+    top: 30px;
+    right: 25px;
+  }
+
+  .investor {
+    position: relative;
+    top: 30px;
+    left: 25px;
+    text-transform: uppercase;
+    font-size: 11px;
+  }
+
+  .card-title {
+    font-size: 3vw;
+  }
+
+  .card-container {
+    display: flex;
+    margin: -6px 0px 10px 0px;
+  }
+
+  .card-container-top {
+    display: flex;
+    margin: 0 0 30px 0;
+  }
+
+  .card-container-bottom {
+    display: flex;
+    margin-top: 18px;
+  }
+
+  .card-container-item {
+    width: 50%;
+  }
+
+  .card-number {
+    font-size: 18px;
+    font-family: "cc font", monospace;
+    width: 90%;
+    margin-top: -3px;
+    height: 40px;
+  }
+
+  .card-number iframe {
+    height: 100%;
+    width: 100%;
+  }
+
+  #copy-pan-container {
+    width: 10%;
+  }
+
+  #copy-name-container {
+    width: 15%;
+  }
+
+  .card-text {
+    font-size: 14px;
+    font-family: "cc font", monospace;
+    width: 50%;
+    height: 7vw;
+    margin-top: -2px;
+  }
+
+  .card-text.exp {
+    width: 44%;
+  }
+
+  .card-text.cvv {
+    width: 28%;
+  }
+
+  .end {
+    margin-left: 25px;
+    text-transform: uppercase;
+    font-family: "cc font", monospace;
+  }
+
+  .end .end-text {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .card-holder {
+    margin: 10px 25px;
+    text-transform: uppercase;
+    font-family: "cc font", monospace;
+  }
+
+  .card {
+    perspective: 1000;
+  }
+
+  .back {
+    transform: rotateY(-180deg) translateZ(0);
+    background: #0B2859;
+    padding: 20vh 28px;
+  }
+
+  .mq-notification {
+    z-index: -1;
+    display: none;
+  }
+
+  .card-icon {
+    background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg' %3E%3Crect x='6.99609' y='6.99805' width='14.0058' height='14.0058' rx='2' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' /%3E%3Cpath d='M6.99776 17.0024H4.99693C3.8919 17.0024 2.99609 16.1066 2.99609 15.0016V4.99742C2.99609 3.89239 3.8919 2.99658 4.99693 2.99658H15.0011C16.1061 2.99658 17.0019 3.89239 17.0019 4.99742V6.99825' stroke='white' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' /%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-size: contain;
+    height: 5vw;
+    width: 5vw;
+    margin-left: 10px;
+    width: 50%;
+  }
+
+  .copyTappedAnimation {
+    animation-duration: 5s;
+    animation-name: copyTapped;
+    animation-iteration-count: calc(1);
+  }
+
+  .card-icon iframe {
+    height: 100%;
+    width: 100%;
+  }
+
+  .card-text iframe {
+    height: 100%;
+    width: 100%;
+  }
+
+  #name-container {
+    appearance: attachment;
+    color: white;
+    font-size: 4vw;
+    width: 80%;
+    padding: 0;
+    margin: 0;
+    border: 0;
+    background-color: transparent;
+    font-family: "montserrat", "Helvetica Neue", Helvetica;
+    letter-spacing: 0.2em;
+    font-weight: "400";
+  }
+
+  @keyframes copyTapped {
+    0% {
+      background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='6.99609'y='6.99805'width='14.0058'height='14.0058'rx='2'stroke='white'stroke-width='1.5'stroke-linecap='round'stroke-linejoin='round'/%3E%3Cpath d='M6.99776 17.0024H4.99693C3.8919 17.0024 2.99609 16.1066 2.99609 15.0016V4.99742C2.99609 3.89239 3.8919 2.99658 4.99693 2.99658H15.0011C16.1061 2.99658 17.0019 3.89239 17.0019 4.99742V6.99825'stroke='white'stroke-width='1.5'stroke-linecap='round'stroke-linejoin='round'/%3E%3C/svg%3E");
+
+    }
+
+    10% {
+      background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12'cy='12'r='12'fill='%2348A74C'/%3E%3Cpath d='M17.3337 8.3335L10.0003 15.6668L6.66699 12.3335'stroke='white'stroke-width='1.5'stroke-linecap='round'stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+
+    }
+
+    90% {
+      background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='12'cy='12'r='12'fill='%2348A74C'/%3E%3Cpath d='M17.3337 8.3335L10.0003 15.6668L6.66699 12.3335'stroke='white'stroke-width='1.5'stroke-linecap='round'stroke-linejoin='round'/%3E%3C/svg%3E%0A");
+
+    }
+  }
+
+  @keyframes flipAnimation {
+    100% {
+      transform: rotateY(-180deg);
+    }
+  }
+</style>
